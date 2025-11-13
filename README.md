@@ -1,6 +1,6 @@
 <div align="center">
   <picture>
-    <img alt="Klovis Logo" src=".github/images/logo.svg" width="80%">
+    <img alt="Klovis Logo" src="https://raw.githubusercontent.com/klovis-ai/klovis/main/images/klovis-full-classic-7ca77819.png)" width="80%">
   </picture>
 </div>
 
