@@ -58,6 +58,7 @@ class SimpleChunker(BaseChunker):
         logger.info(f"Chunking {len(documents)} document(s)...")
 
         for doc in documents:
+            document_meta = doc.metadata or {}
             text = doc.content.strip()
             if not text:
                 continue
@@ -65,6 +66,8 @@ class SimpleChunker(BaseChunker):
             chunks = self._split_text(text)
             for i, chunk_text in enumerate(chunks):
                 metadata = {"chunk_id": i, "source": doc.source, "length": len(chunk_text)}
+                for key, value in document_meta.items():
+                    metadata[f"doc_{key}"] = value
                 chunked_docs.append(
                     Chunk(
                         text=chunk_text.strip(),

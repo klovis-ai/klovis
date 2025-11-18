@@ -10,6 +10,7 @@ def test_html_cleaner_removes_tags_and_entities():
     """
     doc = Document(source="test.html", content=html_text)
     cleaned = cleaner.clean([doc])[0]
+    print(cleaned.content)
     assert "<" not in cleaned.content
     assert "nbsp" not in cleaned.content
     assert "Klovis" in cleaned.content

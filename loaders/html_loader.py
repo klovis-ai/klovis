@@ -57,7 +57,7 @@ class HTMLLoader(BaseLoader):
         for tag in soup(["script", "style", "noscript"]):
             tag.extract()
 
-        text_content = soup.get_text(separator="\n")
+        text_content = soup.get_text(separator=" ")
 
         # Optionally convert to Markdown
         if self.markdownify:

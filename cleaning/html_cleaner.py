@@ -38,7 +38,7 @@ class HTMLCleaner(BaseCleaner):
 
             # 1️⃣ Parse HTML and extract text with logical line breaks
             soup = BeautifulSoup(text, "html.parser")
-            text = soup.get_text(separator="\n")  
+            text = soup.get_text(separator=" ")  
             # 2️⃣ Decode HTML entities (e.g. &nbsp;, &amp;, &#39;)
             text = html.unescape(text)
 

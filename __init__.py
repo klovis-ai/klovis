@@ -4,8 +4,6 @@ Klovis - Data preprocessing toolkit for RAG and LLM pipelines.
 
 from importlib.metadata import version
 
-# Core components
-from klovis.pipeline.pipeline import KlovisPipeline
 
 # Loaders
 from klovis.loaders import (
@@ -14,7 +12,6 @@ from klovis.loaders import (
     JSONLoader,
     HTMLLoader,
     DirectoryLoader,
-    MultiLoader,
 )
 
 # Cleaners
@@ -45,7 +42,6 @@ __all__ = [
     "JSONLoader",
     "HTMLLoader",
     "DirectoryLoader",
-    "MultiLoader",
 
     # Cleaners
     "HTMLCleaner",
@@ -53,9 +49,6 @@ __all__ = [
     "NormalizeCleaner",
     "EmojiCleaner",
     "CompositeCleaner",
-
-    # Pipeline
-    "KlovisPipeline",
 
     # Utils
     "get_logger",

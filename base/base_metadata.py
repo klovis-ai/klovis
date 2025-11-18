@@ -1,20 +1,12 @@
 from abc import ABC, abstractmethod
-from typing import List, Dict
-
+from klovis.models import Chunk
 
 class BaseMetadataGenerator(ABC):
-    """
-    Abstract base class for metadata generation.
-    Used for creating embeddings, Q/A pairs, tags, and semantic information.
-    """
 
     @abstractmethod
-    def generate(self, chunks: List[Dict]) -> List[Dict]:
+    def generate(self, chunk: Chunk) -> dict:
         """
-        Generate metadata for each data chunk.
-        Returns
-        -------
-        List[Dict]
-            Chunks enriched with metadata.
+        Generate metadata for a single chunk.
+        Returns a dict that will be merged into chunk.metadata.
         """
         pass
