@@ -1,5 +1,10 @@
 import re
-from typing import List, Optional
+from typing import List, Optional, Tuple
+try:
+    from markdown_it import MarkdownIt
+except ImportError:
+    MarkdownIt = None  # type: ignore
+
 from klovis.base import BaseChunker, BaseMerger
 from klovis.models import Document, Chunk
 from klovis.utils import get_logger
@@ -10,7 +15,7 @@ logger = get_logger(__name__)
 class MarkdownChunker(BaseChunker):
     """
     Markdown Chunker:
-    - Splits content by Markdown headings (#, ##, ###...)
+    - Splits content by Markdown headings using an AST parser (markdown-it-py).
     - Produces base chunks without merging
     - If a merger is provided, delegates merging after local chunking
     """
@@ -21,9 +26,16 @@ class MarkdownChunker(BaseChunker):
         overlap: int = 200,
         merger: Optional[BaseMerger] = None,
     ):
+        if MarkdownIt is None:
+            raise ImportError(
+                "MarkdownChunker requires 'markdown-it-py' to be installed. "
+                "Please run: pip install markdown-it-py"
+            )
+
         self.max_chunk_size = max_chunk_size
         self.overlap = overlap
         self.merger = merger
+        self.md_parser = MarkdownIt()
 
         logger.debug(
             f"MarkdownChunker initialized (max_chunk_size={max_chunk_size}, "
@@ -35,7 +47,9 @@ class MarkdownChunker(BaseChunker):
 
         for doc in documents:
             document_meta = doc.metadata or {}
+            # Use the new AST-based splitter
             sections = self._split_by_markdown_titles(doc.content)
+            
             chunk_id = 0
             buffer: List[str] = []
             current_size = 0
@@ -93,25 +107,52 @@ class MarkdownChunker(BaseChunker):
 
         return merged
 
-    def _split_by_markdown_titles(self, text: str):
-        parts = re.split(r'(?=^#{1,6}\s)', text, flags=re.MULTILINE)
+    def _split_by_markdown_titles(self, text: str) -> List[Tuple[str, str]]:
+        """
+        Splits markdown text by headings using AST parsing.
+        Returns a list of (title, body) tuples.
+        """
+        tokens = self.md_parser.parse(text)
+        
+        # Find line numbers where headings start
+        # tokens have .map = [start_line, end_line] (0-indexed)
+        split_lines = []
+        for token in tokens:
+            if token.type == 'heading_open' and token.map:
+                split_lines.append(token.map[0])
+        
+        split_lines = sorted(list(set(split_lines)))
+        
+        # If no headers found, return whole text
+        if not split_lines:
+            return [("# Section", text)]
+            
+        lines = text.splitlines(keepends=True)
         sections = []
-
-        for part in parts:
-            part = part.strip()
-            if not part:
+        
+        # Handle text before the first header
+        if split_lines[0] > 0:
+            pre_header_text = "".join(lines[:split_lines[0]]).strip()
+            if pre_header_text:
+                sections.append(("# Preamble", pre_header_text))
+                
+        # Slice text based on header positions
+        for i, start_line in enumerate(split_lines):
+            # End of this section is start of next section, or end of file
+            next_start = split_lines[i+1] if i + 1 < len(split_lines) else len(lines)
+            
+            section_lines = lines[start_line:next_start]
+            if not section_lines:
                 continue
-
-            lines = part.splitlines()
-            if re.match(r'^#{1,6}\s', lines[0]):
-                title = lines[0].strip()
-                body = "\n".join(lines[1:]).strip()
-            else:
-                title = "# Section"
-                body = part
-
+                
+            # First line is the header
+            title = section_lines[0].strip()
+            
+            # Rest is body
+            body = "".join(section_lines[1:]).strip() if len(section_lines) > 1 else ""
+            
             sections.append((title, body))
-
+            
         return sections
 
     def _hard_split(
