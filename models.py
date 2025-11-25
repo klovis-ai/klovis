@@ -4,7 +4,7 @@ All models include utility methods for serialization and export.
 """
 
 from pydantic import BaseModel, Field
-from typing import Any, Optional, Dict
+from typing import Any, Optional, Dict, List
 import json
 
 
@@ -50,7 +50,31 @@ class Document(KlovisBaseModel):
     )
 
 
+class Relationship(BaseModel):
+    """Represents a relationship to another entity or chunk (for GraphRAG)."""
+    target_id: str = Field(..., description="ID of the target chunk or entity.")
+    type: str = Field(..., description="Type of relationship (e.g. 'next', 'parent', 'relates_to').")
+    metadata: Optional[Dict[str, Any]] = Field(default_factory=dict)
+
+
 class Chunk(KlovisBaseModel):
-    """Represents a processed chunk of text."""
+    """
+    Represents a processed chunk of text ready for RAG.
+    Includes support for vector embeddings and graph relationships.
+    """
     text: str = Field(..., description="Chunk text content.")
     metadata: Optional[Dict[str, Any]] = Field(default_factory=dict)
+    
+    # Advanced RAG fields
+    vector: Optional[List[float]] = Field(
+        default=None, 
+        description="Vector embedding of the chunk text."
+    )
+    parent_id: Optional[str] = Field(
+        default=None, 
+        description="ID of the parent document or parent chunk (for hierarchical RAG)."
+    )
+    relationships: List[Relationship] = Field(
+        default_factory=list,
+        description="List of relationships to other chunks (for GraphRAG)."
+    )
