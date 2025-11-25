@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import Any, List, Dict
+from typing import Any, List, Dict, Iterator
 
 
 class BaseLoader(ABC):
@@ -9,7 +9,7 @@ class BaseLoader(ABC):
     """
 
     @abstractmethod
-    def load(self, sources: List[Any]) -> List[Dict]:
+    def load(self, sources: List[Any] = None) -> List[Dict]:
         """
         Load data from one or more sources (files, URLs, databases, etc.).
         Returns
@@ -18,3 +18,15 @@ class BaseLoader(ABC):
             A list of dictionaries representing loaded documents.
         """
         pass
+
+    def load_stream(self, sources: List[Any] = None) -> Iterator[Dict]:
+        """
+        Lazy load data from sources.
+        Default implementation wraps load() but subclasses should override for true streaming.
+        
+        Returns
+        -------
+        Iterator[Dict]
+            An iterator of dictionaries representing loaded documents.
+        """
+        return iter(self.load(sources))
