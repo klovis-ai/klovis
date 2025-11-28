@@ -19,6 +19,17 @@ class EnrichedChunksGenerator(BaseMetadataGenerator):
       - numerical_insights (NEW)
 
     Everything is produced in ONE LLM call returning RAW MARKDOWN.
+
+    Args:
+        llm_client: LLM client instance
+        enabled: List of sections to enable (default: all sections)
+        summary_sentences: Number of sentences in summary (default: 5)
+        topics_count: Number of topics to extract (default: 8)
+        faq_count: Number of FAQ pairs (default: 4)
+        keywords_count: Number of keywords (default: 10)
+        numerical_items: Number of numerical insights (default: 10)
+        max_output_chars: Maximum output characters (default: None)
+        lang: Language code for generated content (default: "en")
     """
 
     def __init__(
@@ -31,6 +42,7 @@ class EnrichedChunksGenerator(BaseMetadataGenerator):
         keywords_count: int = 10,
         numerical_items: int = 10,
         max_output_chars: int | None = None,
+        lang: str = "en",
     ):
         self.llm = llm_client
         self.enabled = enabled or [
@@ -48,6 +60,7 @@ class EnrichedChunksGenerator(BaseMetadataGenerator):
         self.keywords_count = keywords_count
         self.numerical_items = numerical_items
         self.max_output_chars = max_output_chars
+        self.lang = lang
 
         logger.debug(
             "EnrichedChunksGenerator initialized with: "
@@ -57,7 +70,8 @@ class EnrichedChunksGenerator(BaseMetadataGenerator):
             f"faq_count={faq_count}, "
             f"keywords_count={keywords_count}, "
             f"numerical_items={numerical_items}, "
-            f"max_output_chars={max_output_chars}"
+            f"max_output_chars={max_output_chars}, "
+            f"lang={lang}"
         )
 
     # ---------------------------------------------------------------------
@@ -100,6 +114,8 @@ class EnrichedChunksGenerator(BaseMetadataGenerator):
         instructions_text = "\n".join(instruction_lines)
 
         # ---------- Prompt ----------
+        lang_instruction = f"- Generate all content (title, summary, topics, FAQ, keywords, numerical insights) in {self.lang} language." if self.lang != "en" else ""
+        
         prompt = f"""
 You are a markdown generator.
 
@@ -118,6 +134,7 @@ IMPORTANT:
 - Use clear, readable markdown headings.
 - Do NOT invent data. Only include numbers explicitly present or derivable from the text.
 - Ensure sections appear logically ordered.
+{lang_instruction}
 """
 
         # ---------- LLM CALL ----------
@@ -152,6 +169,7 @@ IMPORTANT:
                 "faq_count": self.faq_count,
                 "keywords_count": self.keywords_count,
                 "numerical_items": self.numerical_items,
+                "lang": self.lang,
             },
         )
 
